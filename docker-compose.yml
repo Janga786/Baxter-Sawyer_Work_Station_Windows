@@ -1,62 +1,13 @@
-version: '3.3'
-
+version: '3.8'
 services:
-  baxter_ros1:
-    build:
-      context: ./baxter_ros1
-      dockerfile: Dockerfile
-    container_name: baxter_ros1_container
-    environment:
-      - ROS_MASTER_URI=http://192.168.42.2:11311
-      - ROS_IP=192.168.42.10
-      - ROS_HOSTNAME=192.168.42.10
-      # Remove DISPLAY for Windows compatibility
-    network_mode: host
+  baxter_station:
+    build: .
+    container_name: baxter_station
+    ports:
+      - "8080:8080" # Expose a port for a potential web interface
     volumes:
-      - ./shared_ws:/shared_ws
-      # Remove X11 Unix socket for Windows
-    stdin_open: true
-    tty: true
-    privileged: true
-    command: bash -c "source /opt/ros/indigo/setup.bash && source /ros/ws_baxter/devel/setup.bash && tail -f /dev/null"
-
-  moveit_ros2:
-    build:
-      context: ./moveit_ros2
-      dockerfile: Dockerfile
-    container_name: moveit_ros2_container
-    depends_on:
-      - baxter_ros1
+      - .:/home/baxter/baxter_station
     environment:
-      - ROS_DOMAIN_ID=0
-      - ROS_LOCALHOST_ONLY=0
-      - ROS_MASTER_URI=http://192.168.42.2:11311
-    network_mode: host
-    volumes:
-      - ./shared_ws:/shared_ws
+      - DISPLAY=${DISPLAY}
     extra_hosts:
       - "baxter.local:192.168.42.2"
-      - "baxter:192.168.42.2"
-    stdin_open: true
-    tty: true
-    privileged: true
-    command: tail -f /dev/null
-
-  ros_bridge:
-    build:
-      context: ./bridge
-      dockerfile: Dockerfile
-    container_name: ros_bridge_container
-    depends_on:
-      - baxter_ros1
-    environment:
-      - ROS_MASTER_URI=http://192.168.42.2:11311
-      - ROS_DOMAIN_ID=0
-    network_mode: host
-    extra_hosts:
-      - "baxter.local:192.168.42.2"
-      - "baxter:192.168.42.2"
-    stdin_open: true
-    tty: true
-    privileged: true
-    command: tail -f /dev/null

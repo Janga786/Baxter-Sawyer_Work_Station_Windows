@@ -1,0 +1,11 @@
+Start up squence:
+For Interactive Control:
+  # In a new terminal, run:
+  docker exec -it baxter_moveit bash
+  cd /shared_ws && source /opt/ros/humble/setup.bash
+  python3 simple_baxter_control.py
+
+  For Custom Programming:
+  You can now write any ROS2 code using standard MoveIt/trajectory interfaces and it will control your physical Baxter!
+
+

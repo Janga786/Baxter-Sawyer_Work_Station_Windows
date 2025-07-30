@@ -1,0 +1,29 @@
+Launch: 
+
+rosrun intera_interface enable_robot.py -e
+
+
+Gazebo:
+
+./intera.sh sim
+roslaunch sawyer_gazebo sawyer_world.launch
+
+
+
+
+MoveIt!:
+
+Terminal 1:
+cd ~/sawyer_ws
+./intera.sh
+rosrun intera_interface enable_robot.py -e
+rosrun intera_interface joint_trajectory_action_server.py
+
+Terminal 2:
+roslaunch sawyer_moveit_config sawyer_moveit.launch electric_gripper:=true sim:=false
+
+
+YOLO ML:
+janga@haileesComputer:~/YOLO/data$ yolo predict model=yolo_model.pt source='0' show=True conf=0.1
+
+
