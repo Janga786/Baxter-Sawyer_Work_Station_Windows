@@ -1,4 +1,4 @@
-# Baxter Station (for Windows)
+# Baxter&Sawyer Work Station (for Windows)
 
 This project provides a Dockerized environment to run Baxter Station on a Windows machine.
 
