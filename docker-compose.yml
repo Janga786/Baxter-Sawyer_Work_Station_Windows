@@ -1,13 +1,48 @@
-version: '3.8'
+# Baxter/Sawyer workstation orchestration.
+# Set BAXTER_IP before running if your robot is not at the default address:
+#   set BAXTER_IP=192.168.42.2   (Windows cmd)
+
 services:
-  baxter_station:
-    build: .
-    container_name: baxter_station
-    ports:
-      - "8080:8080" # Expose a port for a potential web interface
-    volumes:
-      - .:/home/baxter/baxter_station
+  # ROS 1 Indigo + Rethink Robotics Baxter SDK. Talks directly to the robot,
+  # whose on-board computer runs the ROS master.
+  baxter_ros1:
+    build: ./baxter_ros1
+    container_name: baxter_ros1_container
     environment:
-      - DISPLAY=${DISPLAY}
+      - ROS_MASTER_URI=http://${BAXTER_IP:-192.168.42.2}:11311
     extra_hosts:
-      - "baxter.local:192.168.42.2"
+      - "baxter.local:${BAXTER_IP:-192.168.42.2}"
+    volumes:
+      - ./shared_ws:/shared_ws
+    stdin_open: true
+    tty: true
+
+  # ROS 1 <-> ROS 2 bridge environment (work in progress, see README).
+  # The command is overridden to a shell so the container stays available
+  # for interactive bridge builds; /start_bridge.sh is the intended runner.
+  ros_bridge:
+    build: ./bridge
+    container_name: ros_bridge_container
+    environment:
+      - ROS_MASTER_URI=http://${BAXTER_IP:-192.168.42.2}:11311
+    extra_hosts:
+      - "baxter.local:${BAXTER_IP:-192.168.42.2}"
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+    depends_on:
+      - baxter_ros1
+
+  # ROS 2 Humble + MoveIt 2 for motion planning. GUI tools (RViz 2) require
+  # an X server on the Windows host, e.g. VcXsrv.
+  moveit_ros2:
+    build: ./moveit_ros2
+    container_name: moveit_ros2_container
+    environment:
+      - DISPLAY=${DISPLAY:-host.docker.internal:0.0}
+    volumes:
+      - ./shared_ws:/shared_ws
+    stdin_open: true
+    tty: true
+    depends_on:
+      - baxter_ros1
