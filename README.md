@@ -159,8 +159,8 @@ For ROS 2 workflow notes and Sawyer (Intera SDK) simulation commands, see
   container (Ubuntu 18.04) has ROS 1 Melodic message packages and build
   tools but no ROS 2 install, and its `/start_bridge.sh` sources Noetic and
   Humble paths that are not present. The MoveIt container carries the
-  `ros1_bridge` source. Compose starts the bridge container with a shell so
-  the build can be finished by hand. Until then, control the robot directly
+  `ros1_bridge` source. Neither container has both installs, so the
+  bridge cannot be built as committed. Until then, control the robot directly
   through the ROS 1 container.
 - **ROS 1 networking through Docker Desktop NAT.** ROS 1 requires
   bidirectional connectivity between nodes and the master. Publishing and
