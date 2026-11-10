@@ -1,12 +1,21 @@
 # Baxter/Sawyer Workstation for Windows
 
 A Docker-based development workstation for Rethink Robotics Baxter and Sawyer
-robots on Windows. Baxter's SDK is stuck on ROS 1 Indigo (Ubuntu 14.04), which
-is effectively impossible to run on modern hardware, let alone Windows. This
-project solves that by containerizing the legacy ROS 1 stack alongside a
-modern ROS 2 Humble + MoveIt 2 environment, with a `ros1_bridge` path between
-them, all orchestrated with Docker Compose and driven from plain Windows
-batch scripts. No Linux dual-boot or VM setup required.
+robots on Windows. Baxter's SDK targets ROS 1 Indigo (Ubuntu 14.04), which is
+hard to install on current machines and does not run on Windows. This repo
+puts that ROS 1 stack in a container next to a ROS 2 Humble + MoveIt 2
+container, managed with Docker Compose and Windows batch scripts, so no Linux
+dual-boot or VM is needed.
+
+I built this in summer 2025 during my research assistantship with Dr. Kevin
+Wedeward at Fort Lewis College, where I revived two Rethink robots (Sawyer and
+Baxter) and set up their ROS 1 / ROS 2 development environment.
+
+**Status.** The ROS 1 container with the Baxter SDK is the path that talks to the
+robot. The ROS 1 to ROS 2 bridge is not finished (see
+[Known limitations](#known-limitations)). Sawyer is covered only by reference
+commands in [`docs/sawyer_simulation_commands.md`](docs/sawyer_simulation_commands.md);
+the containers do not include the Intera SDK.
 
 ## Architecture
 
@@ -41,9 +50,9 @@ batch scripts. No Linux dual-boot or VM setup required.
   ROS master on its on-board computer. This container is what talks to the
   physical robot.
 - **`ros_bridge_container`** (`bridge/Dockerfile`) — an Ubuntu 18.04
-  environment with ROS 1 Melodic message packages and the tooling needed to
-  build `ros1_bridge`, so ROS 2 nodes can exchange topics with the ROS 1
-  robot. See [Known limitations](#known-limitations).
+  environment with ROS 1 Melodic message packages and build tools, intended
+  for building `ros1_bridge` so ROS 2 nodes can exchange topics with the
+  ROS 1 robot. Not finished; see [Known limitations](#known-limitations).
 - **`moveit_ros2_container`** (`moveit_ros2/Dockerfile`) — ROS 2 Humble with
   MoveIt 2, `ros2_control`, RViz 2, and the `ros1_bridge` source in a colcon
   workspace at `/ros/ws_moveit2`. Used for motion planning and new ROS 2
@@ -88,16 +97,12 @@ setup.bat
 `docker-compose build` (expect 15–20 minutes on the first build) and
 `docker-compose up -d`, and prints the most common robot commands.
 
-If your robot is not at the default IP, set it first:
+`setup.bat` sets `BAXTER_IP=192.168.42.2`. If your robot uses a different
+address, edit that line in `setup.bat`, or set `BAXTER_IP` yourself and run
+the manual commands instead:
 
 ```bat
-set BAXTER_IP=192.168.42.2
-setup.bat
-```
-
-Equivalent manual commands:
-
-```bat
+set BAXTER_IP=<your-robot-ip>
 docker-compose build
 docker-compose up -d
 docker-compose ps
@@ -149,15 +154,14 @@ For ROS 2 workflow notes and Sawyer (Intera SDK) simulation commands, see
 
 ## Known limitations
 
-- **The `ros1_bridge` build is a manual step.** Building `ros1_bridge`
-  requires sourcing a ROS 1 and a ROS 2 environment in the same shell, which
-  cannot be done at image-build time across containers. The bridge container
-  ships the prerequisites and a `/start_bridge.sh` runner, and the MoveIt
-  container carries the `ros1_bridge` source; compose starts the bridge
-  container with an interactive shell so the build can be completed there
-  (`colcon build --packages-select ros1_bridge` with both environments
-  sourced). Until then, robot control works directly through the ROS 1
-  container.
+- **The ROS 1 to ROS 2 bridge is not working yet.** Building `ros1_bridge`
+  needs a ROS 1 and a ROS 2 install sourced in the same shell. The bridge
+  container (Ubuntu 18.04) has ROS 1 Melodic message packages and build
+  tools but no ROS 2 install, and its `/start_bridge.sh` sources Noetic and
+  Humble paths that are not present. The MoveIt container carries the
+  `ros1_bridge` source. Compose starts the bridge container with a shell so
+  the build can be finished by hand. Until then, control the robot directly
+  through the ROS 1 container.
 - **ROS 1 networking through Docker Desktop NAT.** ROS 1 requires
   bidirectional connectivity between nodes and the master. Publishing and
   service calls from the containers to the robot work; callbacks from the
@@ -184,4 +188,4 @@ For ROS 2 workflow notes and Sawyer (Intera SDK) simulation commands, see
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
